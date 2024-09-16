@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat con API</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/dist/tailwind.min.css" rel="stylesheet">
+    
+    <style>
+        /* Contenedor principal del chat */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 80vh; 
+            width: 60vw; 
+            border-radius: 12px; 
+            border: 1px solid black; 
+            margin: 20px auto;
+            overflow: hidden; 
+            background: rgb(235, 229, 229); 
+        }
+        /* Área donde se muestran los mensajes */
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        /* Estilos para las burbujas de mensaje */
+        .message-bubble {
+            max-width: 70%;
+            word-break: break-word;
+            position: relative;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        /* Estilo para los mensajes del usuario */
+        .message-bubble.user {
+            background-color: #3bb2f6; 
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        /* Estilo para los mensajes de la API */
+        .message-bubble.api {
+            background-color: #9b9ea5; 
+            color: #000;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        /* Encabezado */
+        .header {
+            background-color: #3bf699; 
+            color: #fff;
+            padding: 16px;
+            text-align: center;
+            font-size: 1.5rem; 
+            font-weight: 1000;
+            border-bottom: 10px solid #e5e7eb; 
+        }
+        /* Pie de página*/
+        .footer {
+            background-color: #3bf699;
+            border-top: 1px solid #e5e7eb;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+        }
+        /* Entrada de texto */
+        .input-field {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #344a77;
+            border-radius: 8px;
+            margin-right: 16px;
+        }
+        /* Botón de envío */
+        .send-button {
+            padding: 10px 20px;
+            background-color: #3b82f6; 
+            color: #fff;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .send-button:hover {
+            background-color: #080c14; 
+        }
+        /* Estilo para la imagen de la respuesta de la API */
+        .api-image {
+            width: 200px; 
+            height: 200px; 
+            margin-right: 8px; 
+        }
+    </style>
+
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="header">Chat App</div>
+        <div id="chat" class="chat-box"></div>
+
+        <div class="footer">
+            <input id="messageInput" type="text" class="input-field" placeholder="Escribe tu mensaje...">
+            <button id="sendButton" class="send-button">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        // Obtener referencias a los elementos HTML
+        const sendButton = document.getElementById('sendButton');
+        const messageInput = document.getElementById('messageInput');
+        const chat = document.getElementById('chat');
+
+        // Manejador de eventos para el botón de envío
+        sendButton.addEventListener('click', () => {
+            // Obtener y limpiar el mensaje ingresado
+            const message = messageInput.value.trim();
+            if (message) {
+                // Crear y mostrar el mensaje del usuario en el chat
+                const userMessage = document.createElement('div');
+                userMessage.className = 'message-bubble user';
+                userMessage.textContent = message;
+                chat.appendChild(userMessage);
+
+                // Limpiar el campo de entrada
+                messageInput.value = '';
+
+                // Obtener respuesta de la API
+                fetch('https://yesno.wtf/api')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la solicitud de red');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Crear y mostrar el mensaje de la API en el chat
+                        const apiMessage = document.createElement('div');
+                        apiMessage.className = 'message-bubble api flex items-center';
+                        
+                        // Crear y configurar la imagen de la respuesta de la API
+                        const apiImage = document.createElement('img');
+                        apiImage.src = data.image;
+                        apiImage.alt = data.answer;
+                        apiImage.className = 'api-image'; // Aplicar tamaño ajustado
+
+                        // Crear y configurar el texto de la respuesta de la API
+                        const apiText = document.createElement('span');
+                        apiText.textContent = data.answer.charAt(0).toUpperCase() + data.answer.slice(1) + '.';
+
+                        apiMessage.appendChild(apiImage);
+                        apiMessage.appendChild(apiText);
+                        chat.appendChild(apiMessage);
+
+                        // Desplazar el chat al final para mostrar el último mensaje
+                        chat.scrollTop = chat.scrollHeight;
+                    })
+                    .catch(error => {
+                        // Manejar errores de la solicitud a la API
+                        const errorMessage = document.createElement('div');
+                        errorMessage.className = 'message-bubble api';
+                        errorMessage.textContent = 'Hubo un error al comunicarse con el servidor.';
+                        chat.appendChild(errorMessage);
+                        chat.scrollTop = chat.scrollHeight;
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
